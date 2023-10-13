@@ -11,10 +11,12 @@ class DeepSpeech(BaseModel):
         super().__init__(n_feats, n_class, **batch)
         self.conv_type = conv_type
         self.convs_params = convs_params
+        self.grus_len = len(grus_params)
         self.convs = nn.Sequential()
         for conv_params in self.convs_params:
             self.convs.append(nn.Conv1d(**conv_params['convolution']))
             self.convs.append(nn.BatchNorm1d(**conv_params['batch_norm']))
+            self.convs.append(nn.ReLU())
         self.grus = nn.ModuleList()
         self.bnorms = nn.ModuleList()
         for gru_params in grus_params:
@@ -27,9 +29,12 @@ class DeepSpeech(BaseModel):
     def forward(self, spectrogram, **batch):
         conv_spec = self.convs(spectrogram)
         out = conv_spec
-        for gru, bnorm in zip(self.grus, self.bnorms):
+        for i, tup in enumerate(zip(self.grus, self.bnorms)):
+            gru, bnorm = tup
             out, _ = gru(out.transpose(1, 2))
             out = bnorm(out.transpose(1, 2))
+            if i != self.grus_len - 1:
+                out = nn.functional.relu(out)
         return {"logits": self.fc(out.transpose(1, 2))}
 
     def transform_input_lengths(self, input_lengths):
