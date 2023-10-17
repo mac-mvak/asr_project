@@ -2,6 +2,9 @@ import argparse
 import json
 import os
 from pathlib import Path
+from hw_asr.metric.utils import calc_cer, calc_wer
+from hw_asr.utils import MetricTracker
+
 
 import torch
 from tqdm import tqdm
@@ -44,6 +47,8 @@ def main(config, out_file):
 
     results = []
 
+    metrics_keys =["cer_argmax", "wer_argmax", "cer_beam", "wer_beam"]
+    metrics = MetricTracker(*metrics_keys)
     with torch.no_grad():
         for batch_num, batch in enumerate(tqdm(dataloaders["test"])):
             batch = Trainer.move_batch_to_device(batch, device)
@@ -61,18 +66,29 @@ def main(config, out_file):
             for i in range(len(batch["text"])):
                 argmax = batch["argmax"][i]
                 argmax = argmax[: int(batch["log_probs_length"][i])]
+                pred_argmax = text_encoder.ctc_decode(argmax.cpu().numpy())
+                pred_beam_search = text_encoder.ctc_beam_search(
+                            batch["probs"][i], batch["log_probs_length"][i], beam_size=100
+                        )[:10]
+                ground_truth = batch["text"][i]
                 results.append(
                     {
                         "ground_trurh": batch["text"][i],
-                        "pred_text_argmax": text_encoder.ctc_decode(argmax.cpu().numpy()),
-                        "pred_text_beam_search": text_encoder.ctc_beam_search(
-                            batch["probs"][i], batch["log_probs_length"][i], beam_size=100
-                        )[:10],
+                        "pred_text_argmax": pred_argmax,
+                        "pred_text_beam_search": pred_beam_search,
                     }
                 )
+                metrics.update("cer_argmax", calc_cer(ground_truth, pred_argmax))
+                metrics.update("wer_argmax", calc_wer(ground_truth, pred_argmax))
+                metrics.update("cer_beam", calc_cer(ground_truth, pred_beam_search[0][0].text))
+                metrics.update("wer_beam", calc_wer(ground_truth, pred_beam_search[0][0].text))
+
     with Path(out_file).open("w") as f:
         json.dump(results, f, indent=2)
 
+    out_metrics_file = out_file[:-5] + "_metrics.json"
+    with Path(out_metrics_file).open("w") as f:
+        json.dump(metrics.results(), f, indent=2)
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description="PyTorch Template")
@@ -86,7 +102,7 @@ if __name__ == "__main__":
     args.add_argument(
         "-r",
         "--resume",
-        default=str(DEFAULT_CHECKPOINT_PATH.absolute().resolve()),
+        default= "/Users/maximvasilyev/Yandex.Disk-mevasilev@edu.hse.ru.localized/Tex/Sound/models/train_360/model_best.pth", #str(DEFAULT_CHECKPOINT_PATH.absolute().resolve()),
         type=str,
         help="path to latest checkpoint (default: None)",
     )
