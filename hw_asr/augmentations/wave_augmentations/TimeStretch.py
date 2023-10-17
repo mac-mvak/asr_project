@@ -11,7 +11,7 @@ class TimeStretch(AugmentationBase):
         self.rate = kwargs['fixed_rate']
 
     def __call__(self, data: Tensor):
-        ans = librosa.effects.time_stretch(data.squeeze().numpy(), self.rate)
+        ans = librosa.effects.time_stretch(data.squeeze().numpy(), rate=self.rate)
         return torch.from_numpy(ans).unsqueeze(0)
 
 

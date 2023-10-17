@@ -1,4 +1,5 @@
 from typing import List, NamedTuple
+from collections import defaultdict
 
 import torch
 
@@ -8,7 +9,6 @@ from .char_text_encoder import CharTextEncoder
 class Hypothesis(NamedTuple):
     text: str
     last_char : int
-    prob: float
 
 
 class CTCCharTextEncoder(CharTextEncoder):
@@ -30,21 +30,21 @@ class CTCCharTextEncoder(CharTextEncoder):
         return ans
     
     def extend_and_merge(self, hypos, frame, beam_size):
-        new_hypos = []
+        new_hypos = defaultdict(float)
         probs, args = torch.sort(frame, descending=True)
-        for hypo in hypos:
+        for hypo, prob in hypos:
             for j in range(min(probs.shape[0], beam_size)):
                 if args[j] == hypo.last_char or args[j] == 0:
                     new_pref = hypo.text
                 else:
                     new_pref = hypo.text + self.ind2char[args[j].item()]
                 last_char = args[j].item()
-                new_prob = hypo.prob * probs[j].item()
-                new_hypos.append(Hypothesis(new_pref, last_char, new_prob))
-        return new_hypos
+                new_prob = prob * probs[j].item()
+                new_hypos[Hypothesis(new_pref, last_char)] += new_prob
+        return list(new_hypos.items())
 
     def truncate(self, hypos, beam_size):
-        return sorted(hypos, key=lambda x: x.prob, reverse=True)[:beam_size]
+        return sorted(hypos, key=lambda x: x[1], reverse=True)[:beam_size]
 
 
 
@@ -56,8 +56,11 @@ class CTCCharTextEncoder(CharTextEncoder):
         assert len(probs.shape) == 2
         char_length, voc_size = probs.shape
         assert voc_size == len(self.ind2char)
-        hypos: List[Hypothesis] = [Hypothesis('', 0, 1.)]
+        hypos: List[Hypothesis] = [(Hypothesis('', 0), 1.)]
         for frame in probs[:probs_length, :]:
             hypos = self.extend_and_merge(hypos, frame, beam_size)
             hypos = self.truncate(hypos, beam_size)
         return hypos
+
+
+

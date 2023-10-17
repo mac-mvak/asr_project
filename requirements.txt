@@ -1,12 +1,12 @@
-torch==2.1.0
-torchvision==0.16.0
+torch==1.13.1
+torchvision==0.14.1
 numpy
 tqdm
 tensorboard
 matplotlib
 pandas
 
-speechbrain~=0.5.12
+speechbrain~=0.5.15
 datasets
 torch_audiomentations
 git+https://github.com/Spijkervet/torchaudio-augmentations.git
@@ -14,7 +14,7 @@ git+https://github.com/facebookresearch/WavAugment
 editdistance
 wandb
 pyctcdecode
-torchaudio~=2.1.0
+torchaudio~=0.13.1
 pillow
 librosa
 
