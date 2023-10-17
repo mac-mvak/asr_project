@@ -1,6 +1,7 @@
 from typing import List, NamedTuple
 from collections import defaultdict
 from pyctcdecode import build_ctcdecoder
+from hw_asr.text_encoder.utils import get_model_lower, get_texts
 
 import torch
 
@@ -15,13 +16,16 @@ class Hypothesis(NamedTuple):
 class CTCCharTextEncoder(CharTextEncoder):
     EMPTY_TOK = "^"
 
-    def __init__(self, alphabet: List[str] = None):
+    def __init__(self, alphabet: List[str] = None, model_name='3-gram.pruned.1e-7'):
         super().__init__(alphabet)
         vocab = [self.EMPTY_TOK] + list(self.alphabet)
         self.ind2char = dict(enumerate(vocab))
         self.char2ind = {v: k for k, v in self.ind2char.items()}
+        lower_path = get_model_lower(model_name)
+        unigrams = get_texts()
         self.model = build_ctcdecoder([''] + list(self.alphabet),
-        kenlm_model_path='/home/ubuntu/asr_project/3-gram.pruned.1e-7.arpa')
+                                        unigrams=unigrams,
+                                        kenlm_model_path=lower_path)
 
     def ctc_decode(self, inds: List[int]) -> str:
         ans = ''
