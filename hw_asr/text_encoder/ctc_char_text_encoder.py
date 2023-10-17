@@ -1,5 +1,6 @@
 from typing import List, NamedTuple
 from collections import defaultdict
+from pyctcdecode import build_ctcdecoder
 
 import torch
 
@@ -19,6 +20,8 @@ class CTCCharTextEncoder(CharTextEncoder):
         vocab = [self.EMPTY_TOK] + list(self.alphabet)
         self.ind2char = dict(enumerate(vocab))
         self.char2ind = {v: k for k, v in self.ind2char.items()}
+        self.model = build_ctcdecoder([''] + list(self.alphabet),
+        kenlm_model_path='/home/ubuntu/asr_project/3-gram.pruned.1e-7.arpa')
 
     def ctc_decode(self, inds: List[int]) -> str:
         ans = ''
@@ -61,6 +64,11 @@ class CTCCharTextEncoder(CharTextEncoder):
             hypos = self.extend_and_merge(hypos, frame, beam_size)
             hypos = self.truncate(hypos, beam_size)
         return hypos
+
+    def ctc_model_search(self, logits: torch.tensor, probs_length):
+        res = self.model.decode_beams(logits[:probs_length, :], beam_width=100)[0][0]
+        return res
+
 
 
 

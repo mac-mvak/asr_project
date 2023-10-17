@@ -47,7 +47,7 @@ def main(config, out_file):
 
     results = []
 
-    metrics_keys =["cer_argmax", "wer_argmax", "cer_beam", "wer_beam"]
+    metrics_keys =["cer_argmax", "wer_argmax", "cer_beam", "wer_beam", "cer_model", "wer_model"]
     metrics = MetricTracker(*metrics_keys)
     with torch.no_grad():
         for batch_num, batch in enumerate(tqdm(dataloaders["test"])):
@@ -67,8 +67,10 @@ def main(config, out_file):
                 argmax = batch["argmax"][i]
                 argmax = argmax[: int(batch["log_probs_length"][i])]
                 pred_argmax = text_encoder.ctc_decode(argmax.cpu().numpy())
+                pred_model = text_encoder.ctc_model_search(batch["log_probs"][i].cpu().numpy(),
+                    batch["log_probs_length"][i])
                 pred_beam_search = text_encoder.ctc_beam_search(
-                            batch["probs"][i], batch["log_probs_length"][i], beam_size=100
+                            batch["probs"][i], batch["log_probs_length"][i], beam_size=1
                         )[:10]
                 ground_truth = batch["text"][i]
                 results.append(
@@ -82,13 +84,15 @@ def main(config, out_file):
                 metrics.update("wer_argmax", calc_wer(ground_truth, pred_argmax))
                 metrics.update("cer_beam", calc_cer(ground_truth, pred_beam_search[0][0].text))
                 metrics.update("wer_beam", calc_wer(ground_truth, pred_beam_search[0][0].text))
+                metrics.update("cer_model", calc_cer(ground_truth, pred_model))
+                metrics.update("wer_model", calc_wer(ground_truth, pred_model))
 
     with Path(out_file).open("w") as f:
         json.dump(results, f, indent=2)
 
     out_metrics_file = out_file[:-5] + "_metrics.json"
     with Path(out_metrics_file).open("w") as f:
-        json.dump(metrics.results(), f, indent=2)
+        json.dump(metrics.result(), f, indent=2)
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description="PyTorch Template")
@@ -102,7 +106,7 @@ if __name__ == "__main__":
     args.add_argument(
         "-r",
         "--resume",
-        default= "/Users/maximvasilyev/Yandex.Disk-mevasilev@edu.hse.ru.localized/Tex/Sound/models/train_360/model_best.pth", #str(DEFAULT_CHECKPOINT_PATH.absolute().resolve()),
+        default= str(DEFAULT_CHECKPOINT_PATH.absolute().resolve()),
         type=str,
         help="path to latest checkpoint (default: None)",
     )
