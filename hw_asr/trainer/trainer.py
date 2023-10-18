@@ -86,6 +86,7 @@ class Trainer(BaseTrainer):
         self.model.train()
         self.train_metrics.reset()
         self.writer.add_scalar("epoch", epoch)
+
         for batch_idx, batch in enumerate(
                 tqdm(self.train_dataloader, desc="train", total=self.len_epoch)
         ):
@@ -133,6 +134,9 @@ class Trainer(BaseTrainer):
 
         for part, dataloader in self.evaluation_dataloaders.items():
             val_log = self._evaluation_epoch(epoch, part, dataloader)
+            if  (self.lr_scheduler is not None) and (self.lr_scheduler_name=="ReduceLROnPlateau"):
+                if part == "val":
+                    self.lr_scheduler.step(val_log["loss"])
             log.update(**{f"{part}_{name}": value for name, value in val_log.items()})
 
         return log
@@ -157,9 +161,7 @@ class Trainer(BaseTrainer):
             self._clip_grad_norm()
             self.optimizer.step()
             if self.lr_scheduler is not None:
-                if self.lr_scheduler_name=="ReduceLROnPlateau":
-                    self.lr_scheduler.step(batch["loss"])
-                else:
+                if self.lr_scheduler_name!="ReduceLROnPlateau":
                     self.lr_scheduler.step()
 
         metrics.update("loss", batch["loss"].item())
