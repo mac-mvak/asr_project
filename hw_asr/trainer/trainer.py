@@ -113,8 +113,12 @@ class Trainer(BaseTrainer):
                         epoch, self._progress(batch_idx), batch["loss"].item()
                     )
                 )
+                if self.lr_scheduler_name!="ReduceLROnPlateau":
+                    lr_epoch = self.lr_scheduler.get_last_lr()[0]
+                else:
+                    lr_epoch = self.optimizer.param_groups[0]['lr']
                 self.writer.add_scalar(
-                    "learning rate", self.lr_scheduler.get_last_lr()[0]
+                   "learning rate", lr_epoch
                 )
                 self._log_predictions(**batch)
                 self._log_spectrogram(batch["spectrogram"])
