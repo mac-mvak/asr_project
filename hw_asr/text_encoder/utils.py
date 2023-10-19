@@ -22,7 +22,7 @@ def get_texts():
         with open(path, "r") as f1:
             with open(lower_path, "w") as f2:
                 for line in f1:
-                    f2.write(line.lower)
+                    f2.write(line.lower())
         os.remove(path)
     words = []
     with open(lower_path, "r") as f:
