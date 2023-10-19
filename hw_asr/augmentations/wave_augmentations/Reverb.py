@@ -8,8 +8,12 @@ from hw_asr.augmentations.base import AugmentationBase
 
 
 class Reverb(AugmentationBase):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, p=1.0, *args, **kwargs):
         self.reverb = torchaudio_augmentations.Reverb(**kwargs)
+        self.p = p
 
     def __call__(self, data: Tensor):
-        return self.reverb(data)
+        if random.random() < self.p:
+            return self.reverb(data)
+        else:
+            return data

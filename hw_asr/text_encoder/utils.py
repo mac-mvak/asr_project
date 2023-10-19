@@ -23,10 +23,9 @@ def get_texts():
             with open(lower_path, "w") as f2:
                 for line in f1:
                     f2.write(line.lower())
-        os.remove(path)
     words = []
     with open(lower_path, "r") as f:
-        for line in f2:
+        for line in f:
             words.append(line.strip())
     return words
 
