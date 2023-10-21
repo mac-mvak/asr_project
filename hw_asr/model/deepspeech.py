@@ -1,5 +1,5 @@
 from torch import nn
-from hw_asr.model.utils import _conv_shape_transform
+from hw_asr.model.utils import _conv_shape_transform1d, _conv_shape_transform2d
 import torch
 
 from hw_asr.base import BaseModel
@@ -22,7 +22,7 @@ class DeepSpeech(BaseModel):
             elif self.conv_type == "Conv2d":
                 self.convs.append(nn.Conv2d(**conv_params['convolution']))
                 self.convs.append(nn.BatchNorm2d(**conv_params['batch_norm']))
-                size_after_feat = _conv_shape_transform(size_after_feat, dim=0, **conv_params['convolution'])
+                size_after_feat = _conv_shape_transform2d(size_after_feat, dim=0, **conv_params['convolution'])
             self.convs.append(nn.ReLU())
         self.grus = nn.ModuleList()
         self.bnorms = nn.ModuleList()
@@ -42,12 +42,14 @@ class DeepSpeech(BaseModel):
         if self.conv_type == "Conv2d":
             spectrogram = spectrogram.unsqueeze(1)
         conv_spec = self.convs(spectrogram)
+        out = conv_spec
         if self.conv_type == "Conv2d":
             out = torch.permute(conv_spec, (0, 3, 1, 2))
             out = out.reshape(*out.shape[:2], -1).transpose(1, 2)
+        h = None
         for i, tup in enumerate(zip(self.grus, self.bnorms)):
             gru, bnorm = tup
-            out, _ = gru(out.transpose(1, 2))
+            out, h = gru(out.transpose(1, 2), h)
             out = bnorm(out.transpose(1, 2))
             if i != self.grus_len - 1:
                 out = nn.functional.relu(out)
@@ -55,8 +57,11 @@ class DeepSpeech(BaseModel):
 
     def transform_input_lengths(self, input_lengths):
         for conv_params in self.convs_params:
-            input_lengths = _conv_shape_transform(input_lengths, **conv_params['convolution'], 
-                                                  dim=None if self.conv_type == "Conv1d" else 1)
+            if self.conv_type == "Conv2d":
+                input_lengths = _conv_shape_transform2d(input_lengths, **conv_params['convolution'], 
+                                                      dim=1)
+            else:
+                input_lengths = _conv_shape_transform1d(input_lengths, **conv_params['convolution'])
         return input_lengths 
 
 
