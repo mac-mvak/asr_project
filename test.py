@@ -69,21 +69,21 @@ def main(config, out_file):
                 pred_argmax = text_encoder.ctc_decode(argmax.cpu().numpy())
                 pred_model = text_encoder.ctc_model_search(batch["log_probs"][i].cpu().numpy(),
                     batch["log_probs_length"][i])
-                pred_beam_search = text_encoder.ctc_beam_search(
-                            batch["probs"][i], batch["log_probs_length"][i], beam_size=1
-                        )[:10]
+                #pred_beam_search = text_encoder.ctc_beam_search(
+                #            batch["probs"][i], batch["log_probs_length"][i], beam_size=5 #small beam_size for faster inference
+                #        )[:10]
                 ground_truth = batch["text"][i]
                 results.append(
                     {
                         "ground_trurh": batch["text"][i],
                         "pred_text_argmax": pred_argmax,
-                        "pred_text_beam_search": pred_beam_search,
+                        #"pred_text_beam_search": pred_beam_search,
                     }
                 )
                 metrics.update("cer_argmax", calc_cer(ground_truth, pred_argmax))
                 metrics.update("wer_argmax", calc_wer(ground_truth, pred_argmax))
-                metrics.update("cer_beam", calc_cer(ground_truth, pred_beam_search[0][0].text))
-                metrics.update("wer_beam", calc_wer(ground_truth, pred_beam_search[0][0].text))
+                #metrics.update("cer_beam", calc_cer(ground_truth, pred_beam_search[0][0].text))
+                #metrics.update("wer_beam", calc_wer(ground_truth, pred_beam_search[0][0].text))
                 metrics.update("cer_model", calc_cer(ground_truth, pred_model))
                 metrics.update("wer_model", calc_wer(ground_truth, pred_model))
 
@@ -154,14 +154,15 @@ if __name__ == "__main__":
 
     # first, we need to obtain config with model parameters
     # we assume it is located with checkpoint in the same folder
-    model_config = Path(args.resume).parent / "config.json"
-    with model_config.open() as f:
-        config = ConfigParser(json.load(f), resume=args.resume)
+    if args.config is None:
+        model_config = Path(args.resume).parent / "config.json"
+        with model_config.open() as f:
+            config = ConfigParser(json.load(f), resume=args.resume)
 
     # update with addition configs from `args.config` if provided
     if args.config is not None:
         with Path(args.config).open() as f:
-            config.config.update(json.load(f))
+            config = ConfigParser(json.load(f), resume=args.resume)
 
     # if `--test-data-folder` was provided, set it as a default test set
     if args.test_data_folder is not None:

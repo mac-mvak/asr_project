@@ -78,7 +78,7 @@ if __name__ == "__main__":
     args.add_argument(
         "-c",
         "--config",
-        default="/Users/maximvasilyev/Yandex.Disk-mevasilev@edu.hse.ru.localized/Tex/Sound/cloner/asr_project_template/hw_asr/configs/one_batch_test.json",
+        default=None,
         type=str,
         help="config file path (default: None)",
     )
