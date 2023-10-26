@@ -11,6 +11,7 @@ datasets
 torch_audiomentations
 git+https://github.com/Spijkervet/torchaudio-augmentations.git
 git+https://github.com/facebookresearch/WavAugment
+https://github.com/kpu/kenlm/archive/master.zip
 editdistance
 wandb
 pyctcdecode
