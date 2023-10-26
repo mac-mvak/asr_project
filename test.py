@@ -69,21 +69,21 @@ def main(config, out_file):
                 pred_argmax = text_encoder.ctc_decode(argmax.cpu().numpy())
                 pred_model = text_encoder.ctc_model_search(batch["log_probs"][i].cpu().numpy(),
                     batch["log_probs_length"][i])
-                #pred_beam_search = text_encoder.ctc_beam_search(
-                #            batch["probs"][i], batch["log_probs_length"][i], beam_size=5 #small beam_size for faster inference
-                #        )[:10]
+                pred_beam_search = text_encoder.ctc_beam_search(
+                            batch["probs"][i], batch["log_probs_length"][i], beam_size=5 #small beam_size for faster inference
+                        )[:10]
                 ground_truth = batch["text"][i]
                 results.append(
                     {
                         "ground_trurh": batch["text"][i],
                         "pred_text_argmax": pred_argmax,
-                        #"pred_text_beam_search": pred_beam_search,
+                        "pred_text_beam_search": pred_beam_search,
                     }
                 )
                 metrics.update("cer_argmax", calc_cer(ground_truth, pred_argmax))
                 metrics.update("wer_argmax", calc_wer(ground_truth, pred_argmax))
-                #metrics.update("cer_beam", calc_cer(ground_truth, pred_beam_search[0][0].text))
-                #metrics.update("wer_beam", calc_wer(ground_truth, pred_beam_search[0][0].text))
+                metrics.update("cer_beam", calc_cer(ground_truth, pred_beam_search[0][0].text))
+                metrics.update("wer_beam", calc_wer(ground_truth, pred_beam_search[0][0].text))
                 metrics.update("cer_model", calc_cer(ground_truth, pred_model))
                 metrics.update("wer_model", calc_wer(ground_truth, pred_model))
 
