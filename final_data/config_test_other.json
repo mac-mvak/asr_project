@@ -184,45 +184,9 @@
                 {
                     "type": "LibrispeechDataset",
                     "args": {
-                        "part": "dev-clean",
+                        "part": "test-other",
                         "max_audio_length": 30.0,
                         "max_text_length": 300
-                    }
-                }
-            ]
-        },
-        "val": {
-            "batch_size": 40,
-            "num_workers": 5,
-            "datasets": [
-                {
-                    "type": "LibrispeechDataset",
-                    "args": {
-                        "part": "dev-clean"
-                    }
-                }
-            ]
-        },
-        "val-other": {
-            "batch_size": 40,
-            "num_workers": 5,
-            "datasets": [
-                {
-                    "type": "LibrispeechDataset",
-                    "args": {
-                        "part": "dev-other"
-                    }
-                }
-            ]
-        },
-        "test-clean": {
-            "batch_size": 40,
-            "num_workers": 5,
-            "datasets": [
-                {
-                    "type": "LibrispeechDataset",
-                    "args": {
-                        "part": "test-clean"
                     }
                 }
             ]
