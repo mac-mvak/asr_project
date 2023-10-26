@@ -7,6 +7,7 @@ matplotlib
 pandas
 
 speechbrain~=0.5.15
+gdown
 datasets
 torch_audiomentations
 git+https://github.com/Spijkervet/torchaudio-augmentations.git
