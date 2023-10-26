@@ -21,5 +21,5 @@ Now we will define scripts.
 
 ## Wandb Report
 
-ttps://wandb.ai/svak/asr_project/reports/ASR-project---Vmlldzo1Nzg2Mzkx
+[Link to report](https://wandb.ai/svak/asr_project/reports/ASR-project---Vmlldzo1Nzg2Mzkx)
 
